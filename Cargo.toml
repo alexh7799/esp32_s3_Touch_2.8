@@ -1,0 +1,25 @@
+[package]
+edition      = "2021"
+name         = "esp32-wave-28"
+rust-version = "1.88"
+version      = "0.1.0"
+
+[[bin]]
+name = "esp32-wave-2-8"
+path = "./src/bin/main.rs"
+
+[dependencies]
+
+[profile.dev]
+opt-level = "s"
+panic = "abort"
+
+[profile.release]
+codegen-units = 1
+debug = 2
+lto = 'fat'
+opt-level = 's'
+panic = "abort"
+
+[package.metadata.espflash]
+partition_table = "partitions.csv"
