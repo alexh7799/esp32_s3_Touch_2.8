@@ -1,0 +1,120 @@
+import { VerticalBox } from "std-widgets.slint";
+import { TextButton, FilledButton, Slider } from "@material";
+import { FilledIconButton } from "../material-1.0/ui/components/filled_icon_button.slint";
+
+export component AppWindow inherits Window {
+    width: 240px;
+    height: 320px;
+    background: rgb(36,36,36);
+
+    in-out property <float> brightness: 0;
+    in-out property <bool> connection: false;
+    in-out property <bool> ison: false;
+
+    callback publish_ison(bool);
+    callback publish_brightness(int);
+    
+        
+    VerticalLayout {
+        alignment: center;
+        spacing: 10px;
+        padding-bottom: 20px;
+
+        HorizontalLayout {
+            spacing: 8px;
+            x: 8px;
+
+            Rectangle {
+                background: connection ? #4CAF50 : #F44336;
+                height: 16px;
+                width: 16px;
+                border-radius: 16px;
+            }
+
+            Text {
+                color: white;
+                font-size: 14px;
+                text: connection ? "online" : "offline";
+            }
+        }
+        
+        
+        HorizontalLayout {
+            alignment: center;
+            padding-top: 10px;
+
+            Slider {
+                width: 150px;
+                height: 80px;
+                maximum: 100;
+                minimum: 0;
+                value: brightness;
+                transform-rotation: 90deg;
+                released(v) => {
+                    brightness = v;
+                    publish_brightness(round(v));
+                }
+            }
+        }
+
+        HorizontalLayout {
+            alignment: center;
+            cross-axis-alignment: center;
+            spacing: 15px;
+            padding-bottom: 30px;
+            padding-top: 20px;
+
+            FilledIconButton {
+                icon: @image-url("./icons/minus.svg");
+                width: 50px;
+                height: 50px;
+                clicked => {
+                    if brightness > 0 {
+                        brightness -=1;
+                    }
+                    publish-brightness(brightness);
+                }
+            }
+
+            Text {
+                width: 30px;
+                font-size: 28px;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+                font-weight: 700;
+                text: brightness;
+                color: white;
+            }
+
+            FilledIconButton {
+                icon: @image-url("./icons/add.svg");
+                width: 50px;
+                height: 50px;
+                clicked => {
+                    if brightness > 0 {
+                        brightness +=1;
+                    }
+                    publish-brightness(brightness);
+                }
+            }
+        }
+
+        
+
+        HorizontalLayout {
+            alignment: center;
+
+            FilledButton {
+                horizontal-stretch: 0;
+                width: 150px;
+                height: 50px;
+                transform-scale: 1.5;
+                text: ison ? "AN" : "AUS";
+                clicked => {
+                    ison = !ison;
+                    publish-ison(ison);
+                }
+            }
+        }
+    } 
+}
