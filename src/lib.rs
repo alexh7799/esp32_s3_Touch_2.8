@@ -1,8 +1,10 @@
 pub mod config;
 pub mod cst328;
+pub mod dht11;
 pub mod mqtt;
 pub mod slint_backend;
 pub mod st7789;
+pub mod test_config;
 pub mod wifi;
 
 #[derive(Debug, Clone, Copy)]
@@ -10,6 +12,8 @@ pub enum UiInbound {
     IsOn(bool),
     Brightness(u8),
     Online(bool),
+    Temperature(u8),
+    Humidity(u8),
 }
 
 #[derive(Debug, Clone, Copy)]

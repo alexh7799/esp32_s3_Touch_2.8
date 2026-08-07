@@ -1,6 +1,7 @@
 # will have compiled files and executables
 debug/
 target/
+src/test_config.rs
 # Editor configuration
 .vscode/
 .zed/

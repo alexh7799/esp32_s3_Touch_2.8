@@ -6,7 +6,10 @@ use std::time::Duration;
 
 use esp_idf_hal::{
     delay::Delay,
-    gpio::{Gpio39, Gpio40, Gpio41, Gpio42, Gpio45, Gpio46, Gpio5, Output, PinDriver},
+    gpio::{
+        Gpio15, Gpio39, Gpio40, Gpio41, Gpio42, Gpio45, Gpio46, Gpio5, InputOutput, Output, Pull,
+        PinDriver,
+    },
     i2c::{I2cConfig, I2cDriver, I2C0},
     peripherals::Peripherals,
     spi::{SpiConfig, SpiDeviceDriver, SpiDriver, SpiDriverConfig, SPI2},
@@ -24,6 +27,7 @@ use slint::platform::{PointerEventButton, WindowAdapter, WindowEvent};
 use slint::LogicalPosition;
 
 use esp32_wave_28::cst328::Cst328;
+use esp32_wave_28::dht11::read_dht11;
 use esp32_wave_28::mqtt::{make_mqtt, mqtt_worker, publish_outbound};
 use esp32_wave_28::slint_backend::{SlintWindow, St7789Platform};
 use esp32_wave_28::st7789::St7789;
@@ -64,10 +68,13 @@ fn app_main() -> anyhow::Result<()> {
         p.pins.gpio5,
     )?;
     let touch = start_touch(p.i2c0, p.pins.gpio1, p.pins.gpio3)?;
+    let mut dht_pin = PinDriver::input_output_od(p.pins.gpio15,).context("DHT11 pin failed")?;
+    dht_pin.set_pull(Pull::Up).context("DHT11 pull-up failed")?;
+    dht_pin.set_high().context("DHT11 idle state failed")?;
     let _wifi = start_wifi(modem, sysloop, nvs)?;
     let (window, ui) = start_slint_platform(display)?;
     let (client, in_rx, out_rx) = start_mqtt(&ui)?;
-    start_loop(window, client, ui, touch, in_rx, out_rx)
+    start_loop(window, client, ui, touch, in_rx, out_rx, dht_pin)
 }
 
 fn sys_start() -> anyhow::Result<(Peripherals, EspSystemEventLoop, EspDefaultNvsPartition)> {
@@ -173,11 +180,14 @@ fn start_loop(
     mut touch: Touch,
     in_rx: mpsc::Receiver<UiInbound>,
     out_rx: mpsc::Receiver<UiOutbound>,
+    mut dht_pin: PinDriver<'static, Gpio15, InputOutput>,
 ) -> anyhow::Result<()> {
     let slint_window = window.window();
     let mut touch_active = false;
     let mut last_pos = LogicalPosition::new(0.0_f32, 0.0_f32);
     let mut subscribed = false;
+    let mut dht_delay = Delay::new_default();
+    let mut last_dht = std::time::Instant::now();
     loop {
         if !subscribed {
             subscribed = try_subscribe(&mut client);
@@ -186,6 +196,10 @@ fn start_loop(
         drain_inbound(&ui, &in_rx);
         slint::platform::update_timers_and_animations();
         process_touch(&mut touch, &slint_window, &mut touch_active, &mut last_pos);
+        if last_dht.elapsed() >= Duration::from_secs(10) {
+            last_dht = std::time::Instant::now();
+            poll_dht11(&mut dht_pin, &mut dht_delay, &ui);
+        }
         window.render_frame().expect("render failed");
         std::thread::sleep(Duration::from_millis(16));
     }
@@ -226,11 +240,27 @@ fn drain_inbound(ui: &AppWindow, rx: &std::sync::mpsc::Receiver<UiInbound>) {
     }
 }
 
+fn poll_dht11(
+    pin: &mut PinDriver<'static, Gpio15, InputOutput>,
+    delay: &mut Delay,
+    ui: &AppWindow,
+) {
+    match read_dht11(pin, delay) {
+        Ok(reading) => {
+            apply_inbound(ui, UiInbound::Temperature(reading.temperature));
+            apply_inbound(ui, UiInbound::Humidity(reading.humidity));
+        }
+        Err(e) => log::warn!("DHT11: {e}"),
+    }
+}
+
 fn apply_inbound(ui: &AppWindow, msg: UiInbound) {
     match msg {
         UiInbound::IsOn(v) => ui.set_ison(v),
         UiInbound::Brightness(v) => ui.set_brightness(v as f32),
         UiInbound::Online(v) => ui.set_connection(v),
+        UiInbound::Temperature(v) => ui.set_temperature(v as f32),
+        UiInbound::Humidity(v) => ui.set_humidity(v as f32),
     }
 }
 

@@ -1,9 +1,9 @@
 use crate::config;
 use anyhow::Context;
-use std::time::Duration;
 use esp_idf_svc::eventloop::EspSystemEventLoop;
 use esp_idf_svc::nvs::EspDefaultNvsPartition;
 use esp_idf_svc::wifi::{BlockingWifi, ClientConfiguration, Configuration, EspWifi};
+use std::time::Duration;
 
 pub fn make_wifi(
     modem: esp_idf_hal::modem::Modem,
@@ -23,12 +23,13 @@ pub fn connect_wifi(wifi: &mut BlockingWifi<EspWifi<'static>>) -> anyhow::Result
             .try_into()
             .map_err(|_| anyhow::anyhow!("WIFI_PASS too long"))?,
         ..Default::default()
-    })).context("wifi set_configuration failed")?;
+    }))
+    .context("wifi set_configuration failed")?;
     wifi.start().context("wifi start failed")?;
     loop {
         match wifi.connect() {
             Ok(()) => break,
-            Err(error) => {
+            Err(_error) => {
                 let _ = wifi.disconnect();
                 std::thread::sleep(Duration::from_secs(5));
             }

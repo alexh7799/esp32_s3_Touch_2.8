@@ -9,6 +9,8 @@ export component AppWindow inherits Window {
     in-out property <float> brightness: 0;
     in-out property <bool> connection: false;
     in-out property <bool> ison: false;
+    in-out property <float> temperature;
+    in-out property <float> humidity;
 
     callback publish_ison(bool);
     callback publish_brightness(int);
@@ -34,6 +36,16 @@ export component AppWindow inherits Window {
                 color: white;
                 font-size: 14px;
                 text: connection ? "online" : "offline";
+            }
+            Text {
+                color: white;
+                font-size: 14px;
+                text: round(temperature) + " °C";
+            }
+            Text {
+                color: white;
+                font-size: 14px;
+                text: round(humidity) + " %";
             }
         }
         
