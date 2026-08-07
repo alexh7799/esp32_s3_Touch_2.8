@@ -26,7 +26,9 @@ embuild = "0.33.2"
 
 slint-build = { version = "=1.17.1" }
 
-
+[patch.crates-io]
+memmap2 = { path = "memmap2-stub" }
+fontique = { path = "vendor/fontique" }
 
 [profile.dev]
 opt-level = "s"

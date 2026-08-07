@@ -1,0 +1,11 @@
+[package]
+name = "memmap2"
+version = "0.9.11"
+edition = "2021"
+
+
+[dependencies]
+libc = { version = "0.2", default-features = false }
+
+[lib]
+path = "src/lib.rs"
