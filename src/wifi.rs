@@ -1,16 +1,21 @@
-fn make_wifi(
-    modem:   esp_idf_hal::modem::Modem,
+use crate::config;
+use anyhow::Context;
+use esp_idf_svc::eventloop::EspSystemEventLoop;
+use esp_idf_svc::nvs::EspDefaultNvsPartition;
+use esp_idf_svc::wifi::{BlockingWifi, ClientConfiguration, Configuration, EspWifi};
+
+pub fn make_wifi(
+    modem: esp_idf_hal::modem::Modem,
     sysloop: EspSystemEventLoop,
-    nvs:     EspDefaultNvsPartition,
+    nvs: EspDefaultNvsPartition,
 ) -> anyhow::Result<BlockingWifi<EspWifi<'static>>> {
-    let wifi = EspWifi::new(modem, sysloop.clone(), Some(nvs))
-        .context("EspWifi::new failed")?;
+    let wifi = EspWifi::new(modem, sysloop.clone(), Some(nvs)).context("EspWifi::new failed")?;
     BlockingWifi::wrap(wifi, sysloop).context("BlockingWifi::wrap failed")
 }
 
-fn connect_wifi(wifi: &mut BlockingWifi<EspWifi<'static>>) -> anyhow::Result<()> {
+pub fn connect_wifi(wifi: &mut BlockingWifi<EspWifi<'static>>) -> anyhow::Result<()> {
     wifi.set_configuration(&Configuration::Client(ClientConfiguration {
-        ssid:     config::WIFI_SSID
+        ssid: config::WIFI_SSID
             .try_into()
             .map_err(|_| anyhow::anyhow!("WIFI_SSID too long"))?,
         password: config::WIFI_PASS

@@ -1,40 +1,34 @@
-
 use embedded_hal::{delay::DelayNs, digital::OutputPin, spi::SpiDevice};
 
-pub const WIDTH:  u16 = 240;
+pub const WIDTH: u16 = 240;
 pub const HEIGHT: u16 = 320;
 
 #[allow(dead_code)]
 mod cmd {
     pub const SWRESET: u8 = 0x01;
-    pub const SLPOUT:  u8 = 0x11;
-    pub const COLMOD:  u8 = 0x3A;
-    pub const MADCTL:  u8 = 0x36;
-    pub const CASET:   u8 = 0x2A;
-    pub const RASET:   u8 = 0x2B;
-    pub const RAMWR:   u8 = 0x2C;
-    pub const DISPON:  u8 = 0x29;
-    pub const INVON:   u8 = 0x21;
+    pub const SLPOUT: u8 = 0x11;
+    pub const COLMOD: u8 = 0x3A;
+    pub const MADCTL: u8 = 0x36;
+    pub const CASET: u8 = 0x2A;
+    pub const RASET: u8 = 0x2B;
+    pub const RAMWR: u8 = 0x2C;
+    pub const DISPON: u8 = 0x29;
+    pub const INVON: u8 = 0x21;
 }
 
 pub struct St7789<SPI, DC, RST> {
     spi: SPI,
-    dc:  DC,
+    dc: DC,
     rst: RST,
 }
 
 impl<SPI, DC, RST> St7789<SPI, DC, RST>
 where
     SPI: SpiDevice,
-    DC:  OutputPin,
+    DC: OutputPin,
     RST: OutputPin,
 {
-    pub fn new<D: DelayNs>(
-        spi: SPI,
-        dc:  DC,
-        rst: RST,
-        delay: &mut D,
-    ) -> Result<Self, InitError> {
+    pub fn new<D: DelayNs>(spi: SPI, dc: DC, rst: RST, delay: &mut D) -> Result<Self, InitError> {
         let mut driver = Self { spi, dc, rst };
         driver.hard_reset(delay).map_err(|_| InitError::Gpio)?;
         driver.init_sequence(delay).map_err(|_| InitError::Spi)?;
@@ -43,7 +37,7 @@ where
 
     pub fn flush_line(
         &mut self,
-        line:  u16,
+        line: u16,
         range: &core::ops::Range<usize>,
         bytes: &[u8],
     ) -> Result<(), DrawError> {

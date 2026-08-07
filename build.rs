@@ -1,16 +1,14 @@
-
 fn main() {
     linker_be_nice();
     embuild::espidf::sysenv::output();
     // embuild::build::CfgArgs::output_propagated("ESP_IDF").unwrap();
-    let config = slint_build::CompilerConfiguration::new().embed_resources(slint_build::EmbedResourcesKind::EmbedForSoftwareRenderer)
-    .with_library_paths(
-        std::collections::HashMap::from([(
+    let config = slint_build::CompilerConfiguration::new()
+        .embed_resources(slint_build::EmbedResourcesKind::EmbedForSoftwareRenderer)
+        .with_library_paths(std::collections::HashMap::from([(
             "material".to_string(),
             std::path::Path::new(&std::env::var_os("CARGO_MANIFEST_DIR").unwrap())
                 .join("material-1.0/material.slint"),
-        )]),
-    );
+        )]));
     slint_build::compile_with_config("ui/main.slint", config).unwrap();
     slint_build::print_rustc_flags().unwrap()
 }
