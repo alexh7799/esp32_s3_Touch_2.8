@@ -2,7 +2,7 @@
 edition      = "2021"
 name         = "esp32-wave-28"
 rust-version = "1.88"
-version      = "0.1.0"
+version      = "1.0.0"
 
 [[bin]]
 name = "esp32-wave-2-8"
